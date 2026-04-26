@@ -76,6 +76,10 @@ Same shape — add the MCP server entry to your client's config (each client has
 - **Prompts matter.** For Qwen2.5-VL, asking for `bbox_2d` JSON output explicitly and listing each region numerically yields the most reliable results.
 - **Image format**: PNG, JPEG, TIFF, HEIF — anything Apple's `NSImage(contentsOf:)` accepts.
 
+## Tool contract
+
+This server implements the [GroundingKit ecosystem `ground_region` spec][spec] — same tool name, input schema, and output shape as [`groundingkit-osaurus`][osa]. AI agents that work with one will work with the other.
+
 ## Why this exists
 
 Screen-grounding (semantic "where is X on this screen?") is a missing primitive in the MCP ecosystem. Existing macOS-MCP servers ([applescript-mcp][asmcp] and similar) cover process control and Apple-framework primitives, but not VLM-based visual region detection. This server fills that gap.
@@ -99,8 +103,12 @@ MIT — see [LICENSE](LICENSE).
 ## Related
 
 - [GroundingKit][gk] — the underlying Swift library and consumer macOS overlay app
+- [Ecosystem spec][spec] — canonical `ground_region` contract for all adapters
+- [groundingkit-osaurus][osa] — same `ground_region` capability exposed as an Osaurus plugin
 - [mlx-swift-lm PR #222][pr222] — upstream Qwen2.5-VL fixes that make this possible
 - [Official MCP Swift SDK][sdk] — what this server is built on
 
+[spec]: https://github.com/NivDvir/screen-overlay-toolkit/blob/main/docs/ECOSYSTEM_SPEC.md
+[osa]: https://github.com/NivDvir/groundingkit-osaurus
 [pr222]: https://github.com/ml-explore/mlx-swift-lm/pull/222
 [sdk]: https://github.com/modelcontextprotocol/swift-sdk
