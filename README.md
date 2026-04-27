@@ -30,23 +30,40 @@ Examples of what an AI agent would call:
 
 ## Install (build from source)
 
+> **Important:** must build via `xcodebuild`, **not** `swift build`. mlx-swift's
+> Cmlx target relies on Xcode's auto-discovered Metal-compiler phase to produce
+> `default.metallib`. SwiftPM has no equivalent phase and silently skips it,
+> producing a binary that crashes the moment the model tries to dispatch the
+> first GPU kernel. This is tracked upstream as a SwiftPM-build-plugin gap;
+> until that lands, `xcodebuild` is the only working path.
+
 ```bash
 git clone https://github.com/NivDvir/groundingkit-mcp.git
 cd groundingkit-mcp
-swift build -c release
-# Binary lands at .build/release/groundingkit-mcp
+xcodebuild -scheme groundingkit-mcp -configuration Release \
+           -destination 'platform=macOS' build
+# Binary lands at:
+#   ~/Library/Developer/Xcode/DerivedData/groundingkit-mcp-*/Build/Products/Release/groundingkit-mcp
+```
+
+Convenience: copy the binary to a stable path so config files don't break on Xcode rebuilds.
+```bash
+mkdir -p ~/.local/bin
+cp "$(find ~/Library/Developer/Xcode/DerivedData -path '*groundingkit-mcp-*' \
+       -name groundingkit-mcp -perm +111 | grep Release/groundingkit-mcp | head -1)" \
+   ~/.local/bin/groundingkit-mcp
 ```
 
 The first run will download the model from HuggingFace if not cached:
 
 ```bash
-.build/release/groundingkit-mcp  # waits for stdio MCP requests
+~/.local/bin/groundingkit-mcp  # waits for stdio MCP requests
 ```
 
 To use a different VLM (any Qwen2.5-VL-architecture derivative — UI-TARS-1.5-7B is verified):
 
 ```bash
-GK_MODEL=mlx-community/UI-TARS-1.5-7B-4bit .build/release/groundingkit-mcp
+GK_MODEL=mlx-community/UI-TARS-1.5-7B-4bit ~/.local/bin/groundingkit-mcp
 ```
 
 ## Use with Claude Desktop
@@ -57,7 +74,7 @@ Add to your `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "groundingkit": {
-      "command": "/absolute/path/to/groundingkit-mcp/.build/release/groundingkit-mcp"
+      "command": "/Users/YOU/.local/bin/groundingkit-mcp"
     }
   }
 }
@@ -91,7 +108,7 @@ Screen-grounding (semantic "where is X on this screen?") is a missing primitive 
 Quick MCP-protocol smoke test (requires `jq`):
 
 ```bash
-( echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"test","version":"1"}}}'; sleep 1 ) | .build/release/groundingkit-mcp | jq .
+( echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"test","version":"1"}}}'; sleep 1 ) | ~/.local/bin/groundingkit-mcp | jq .
 ```
 
 You should see an `initialize` response with the server's capabilities and a `ground_region` tool listed via a follow-up `tools/list` call.
